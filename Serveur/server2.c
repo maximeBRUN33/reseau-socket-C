@@ -116,6 +116,23 @@ static void app(void)
                   strncat(buffer, " disconnected !", BUF_SIZE - strlen(buffer) - 1);
                   send_message_to_all_clients(clients, client, actual, buffer, 1);
                }
+               if(strstr(buffer, "Private to ") - buffer == 0)
+               {
+                  char receiverNamebuff[BUF_SIZE];
+                  strncpy(receiverNamebuff, &buffer[11], BUF_SIZE - 11);
+                  char receiverName[BUF_SIZE];
+                  strncpy(receiverName, receiverNamebuff, (strstr(receiverNamebuff, " : ") - receiverNamebuff));
+                  int length = strlen(receiverName) + 3;
+                  char *message = &receiverNamebuff[length];
+                  for(int j = 0; j < actual; j++)
+                  {
+                     if(strcmp(clients[j].name,receiverName) == 0)
+                     {
+                        send_message_to_a_client(clients, client, clients[j], actual, message, 0);
+                     }
+
+                  }
+               }
                else
                {
                   send_message_to_all_clients(clients, client, actual, buffer, 0);
@@ -166,6 +183,36 @@ static void send_message_to_all_clients(Client *clients, Client sender, int actu
          strncat(message, buffer, sizeof message - strlen(message) - 1);
          write_client(clients[i].sock, message);
 
+         puts(message);
+      }
+   }
+}
+
+static void send_message_to_a_client(Client *clients, Client sender, Client receiver, int actual, const char *buffer, char from_server)
+{
+   int i = 0;
+   char message[BUF_SIZE];
+   char serverMessage[BUF_SIZE];
+   message[0] = 0;
+   serverMessage[0] = 0;
+   for(i = 0; i < actual; i++)
+   {
+      /* we don't send message to the sender */
+      if(receiver.sock == clients[i].sock)
+      {
+         if(from_server == 0)
+         {
+            strncpy(message, sender.name, BUF_SIZE - 1);
+            strncat(message, " : ", sizeof message - strlen(message) - 1);
+         }
+         strncat(message, buffer, sizeof message - strlen(message) - 1);
+         write_client(clients[i].sock, message);
+      
+         strncat(serverMessage, "Pour ", BUF_SIZE-1);
+         strncat(serverMessage, receiver.name, BUF_SIZE-1);
+         strncat(serverMessage, " de ", BUF_SIZE-1);
+         strncat(serverMessage, message, BUF_SIZE-1);
+         puts(serverMessage);
       }
    }
    puts(message);
