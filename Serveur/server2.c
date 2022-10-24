@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <string.h>
 
 #include "server2.h"
 #include "client2.h"
@@ -102,7 +103,7 @@ static void app(void)
          for(i = 0; i < actual; i++)
          {
             /* a client is talking */
-            if(FD_ISSET(clients[i].sock, &rdfs))
+            if((clients[i].sock, &rdfs))
             {
                Client client = clients[i];
                int c = read_client(clients[i].sock, buffer);
@@ -153,6 +154,7 @@ static void send_message_to_all_clients(Client *clients, Client sender, int actu
    message[0] = 0;
    for(i = 0; i < actual; i++)
    {
+         puts(strncat(strncat(sender.name, " : ", sizeof sender.name - strlen(sender.name) - 1),buffer,sizeof sender.name - strlen(sender.name) + 3));
       /* we don't send message to the sender */
       if(sender.sock != clients[i].sock)
       {
@@ -163,8 +165,63 @@ static void send_message_to_all_clients(Client *clients, Client sender, int actu
          }
          strncat(message, buffer, sizeof message - strlen(message) - 1);
          write_client(clients[i].sock, message);
+
       }
    }
+   puts(message);
+}
+
+static int write_history(const char *content) 
+{
+      int num;
+   FILE *fptr;
+
+   // use appropriate location if you are using MacOS or Linux
+   fptr = fopen("./history.txt","w");
+
+   if(fptr == NULL)
+   {
+      perror(fopen("./history.txt","w"));   
+      exit(errno);             
+   }
+
+   //printf("Enter num: ");
+   //scanf("%d",&num);
+
+   fprintf(fptr,"%s",content);
+   fclose(fptr);
+
+   return 0;
+}
+
+static int read_history(void)
+{
+   FILE* ptr;
+    char ch;
+ 
+    // Opening file in reading mode
+    ptr = fopen("history.txt", "r");
+ 
+    if (NULL == ptr) {
+        printf("No discussion history \n");
+        return -1;
+    }
+ 
+    printf("content of history : ...\n");
+ 
+    // Printing what is written in file
+    // character by character using loop.
+    do {
+        ch = fgetc(ptr);
+        printf("%c", ch);
+ 
+        // Checking if character is not EOF.
+        // If it is EOF stop eading.
+    } while (ch != EOF);
+ 
+    // Closing the file
+    fclose(ptr);
+    return 0;
 }
 
 static int init_connection(void)

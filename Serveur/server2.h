@@ -38,6 +38,8 @@ typedef struct in_addr IN_ADDR;
 static void init(void);
 static void end(void);
 static void app(void);
+static int write_history(const char *content); 
+static int read_history(void);
 static int init_connection(void);
 static void end_connection(int sock);
 static int read_client(SOCKET sock, char *buffer);
