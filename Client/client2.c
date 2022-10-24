@@ -5,6 +5,8 @@
 
 #include "client2.h"
 
+const char *EXIT_CLIENT = "quit";
+
 static void init(void)
 {
 #ifdef WIN32
@@ -55,6 +57,11 @@ static void app(const char *address, const char *name)
       if(FD_ISSET(STDIN_FILENO, &rdfs))
       {
          fgets(buffer, BUF_SIZE - 1, stdin);
+         if(strncmp(buffer,EXIT_CLIENT,4) == 0) {
+            printf("...FIN DE LA CONNEXION... \n");
+            end_connection(sock);
+            exit(0);
+         }
          {
             char *p = NULL;
             p = strstr(buffer, "\n");

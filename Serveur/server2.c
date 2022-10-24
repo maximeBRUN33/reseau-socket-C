@@ -7,6 +7,8 @@
 #include "server2.h"
 #include "client2.h"
 
+const char **clients_messagerie;
+int nb_messageries = 0;
 static void init(void)
 {
 #ifdef WIN32
@@ -96,6 +98,9 @@ static void app(void)
          strncpy(c.name, buffer, BUF_SIZE - 1);
          clients[actual] = c;
          actual++;
+
+         // read history if has one
+         read_history("history.txt")
       }
       else
       {
@@ -118,6 +123,7 @@ static void app(void)
                }
                if(strstr(buffer, "Private to ") - buffer == 0)
                {
+                  printf("avant history");
                   char receiverNamebuff[BUF_SIZE];
                   strncpy(receiverNamebuff, &buffer[11], BUF_SIZE - 11);
                   char receiverName[BUF_SIZE];
@@ -129,6 +135,9 @@ static void app(void)
                      if(strcmp(clients[j].name,receiverName) == 0)
                      {
                         send_message_to_a_client(clients, client, clients[j], actual, message, 0);
+                     } else {
+                        printf("avant history");
+                        write_history(buffer);
                      }
 
                   }
@@ -241,13 +250,13 @@ static int write_history(const char *content)
    return 0;
 }
 
-static int read_history(void)
+static int read_history(char *file)
 {
    FILE* ptr;
     char ch;
  
     // Opening file in reading mode
-    ptr = fopen("history.txt", "r");
+    ptr = fopen(file, "r");
  
     if (NULL == ptr) {
         printf("No discussion history \n");
