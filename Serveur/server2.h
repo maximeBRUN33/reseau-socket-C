@@ -48,6 +48,8 @@ typedef struct
 static void init(void);
 static void end(void);
 static void app(void);
+int write_history(const char *content); 
+int read_history(char *file);
 static int init_connection(void);
 static void end_connection(int sock);
 static int read_client(SOCKET sock, char *buffer);
