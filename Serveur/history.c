@@ -5,10 +5,9 @@
 #include <string.h>
 
 #include "history.h"
-
+#include "server2.h"
 
 int initialize_history(History* history, int size) {
-    printf("test init \n");
   history->max_size = size;
   history->lines = malloc(size * sizeof(char*));
   int i;
@@ -26,12 +25,31 @@ void add_to_history(History* history, char* commandline) {
   history->begin = (history->begin + 1) % history->max_size;
 }
 
-void print_history(History* history) {
+void print_history(SOCKET socket, History* history) {
   int i;
   int begin = history->begin;
+  if (history->lines[begin] == NULL) {
+      if (send(socket, "*** Historique Vide ***", strlen("*** Historique Vide ***"), 0) < 0)
+      {
+        perror("send()");
+        exit(errno);
+      }
+  } else {
+      if (send(socket, "*** Voici votre historique ***", strlen("*** Voici votre historique ***"), 0) < 0)
+      {
+        perror("send()");
+        exit(errno);
+      }
+  }
   for (i = 0; i < history->max_size; ++i) {
     if (history->lines[begin] != NULL) {
-      printf("%s\n", history->lines[begin]);
+      char buff_to_add[strlen(history->lines[begin])+2];
+      strcpy(buff_to_add,history->lines[begin]);
+      if (send(socket, buff_to_add, strlen(buff_to_add), 0) < 0)
+      {
+        perror("send()");
+        exit(errno);
+      }
     }
     ++begin;
     if (begin >= history->max_size) {
@@ -40,30 +58,6 @@ void print_history(History* history) {
   }
 }
 void free_history(History* history) {
-  // int i;
-  // for (i = 0; i < history->max_size; ++i) {
-  //   if (history->lines[i] != NULL) {
-  //     free(history->lines[i]);
-  //   }
-  // }
   free(history->lines);
 }
-
-// int main(void) {
-//     History* test_history = (History *)malloc(sizeof(History));
-//     printf("essai history eh oh %d \n",*test_history);
-//     int size = 30;
-//     const char * content = "test de contenue";
-
-//     if(initialize_history(test_history,30)) {
-//         printf("test \n");
-//     }
-        
-//     add_to_history(test_history,"je suis la premiere ligne de l'historique");
-//     add_to_history(test_history,"**** deuxieme ligne de l'historique***");
-//     add_to_history(test_history,content);
-//     print_history(test_history);
-//     free_history(test_history);
-//     return 0;
-// };
 

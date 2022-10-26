@@ -1,6 +1,7 @@
 #ifndef HISTORY_H
 #define HISTORY_H
 
+#include "server2.h"
 
 typedef struct
 {
@@ -11,6 +12,6 @@ typedef struct
 
 int initialize_history(History* history, int size);
 void add_to_history(History* history, char* commandline);
-void print_history(History* history);
+void print_history(SOCKET socket, History* history);
 void free_history(History* history);
 #endif /* guard */

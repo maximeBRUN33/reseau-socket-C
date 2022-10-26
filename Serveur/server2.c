@@ -104,7 +104,7 @@ static void app(void)
          actual++;
 
          // read history if has one
-         print_history(history);
+         print_history(c.sock, history);
       }
       else
       {
@@ -112,7 +112,7 @@ static void app(void)
          for (i = 0; i < actual; i++)
          {
             /* a client is talking */
-            if ((clients[i].sock, &rdfs))
+            if (FD_ISSET(clients[i].sock, &rdfs))
             {
                Client client = clients[i];
                int c = read_client(clients[i].sock, buffer);
@@ -152,6 +152,8 @@ static void app(void)
    }
 
    clear_clients(clients, actual);
+   free_history(history);
+   free(history);
    end_connection(sock);
 }
 
@@ -177,21 +179,21 @@ static void send_message_to_all_clients(Client *clients, Client sender, int actu
    int i = 0;
    char message[BUF_SIZE];
    message[0] = 0;
+   if (from_server == 0)
+      {
+         strncpy(message, sender.name, BUF_SIZE - 1);
+         strncat(message, " : ", sizeof message - strlen(message) - 1);
+      }
+   strncat(message, buffer, sizeof message - strlen(message) - 1);
+   add_to_history(history,message);
+   puts(message);
    for (i = 0; i < actual; i++)
    {
-      puts(strncat(strncat(sender.name, " : ", sizeof sender.name - strlen(sender.name) - 1), buffer, sizeof sender.name - strlen(sender.name) + 3));
+      //puts(strncat(strncat(sender.name, " : ", sizeof sender.name - strlen(sender.name) - 1), buffer, sizeof sender.name - strlen(sender.name) + 3));
       /* we don't send message to the sender */
       if (sender.sock != clients[i].sock)
       {
-         if (from_server == 0)
-         {
-            strncpy(message, sender.name, BUF_SIZE - 1);
-            strncat(message, " : ", sizeof message - strlen(message) - 1);
-         }
-         strncat(message, buffer, sizeof message - strlen(message) - 1);
-         write_client(clients[i].sock, message);
-         add_to_history(history,message);
-         puts(message);
+         write_client(clients[i].sock, message); 
       }
    }
 }
