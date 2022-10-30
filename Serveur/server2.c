@@ -151,7 +151,7 @@ static void app(void)
                         send_message_to_a_client(clients, client, clients[j], actual, message, 0);
                      }
                   }
-                  action = 1;
+                  action = true;
                }
                if((strstr(buffer, "Voir clients") - buffer == 0)&&(!action))
                {
