@@ -3,7 +3,7 @@
 #include <errno.h>
 #include <string.h>
 #include <string.h>
-
+#include <stdbool.h>
 #include "server2.h"
 #include "client2.h"
 #include "history.h"
@@ -107,11 +107,17 @@ static void app(void)
          clients[actual] = c;
          actual++;
 
+         char message_connection[BUF_SIZE];
+         message_connection[0]=0;
+         strcpy(message_connection, buffer);
+         strcat(message_connection, " connected !");
+         send_message_to_all_clients(clients, c, actual, message_connection, 1);
          // read history if has one
          print_history(c.sock, history);
       }
       else
       {
+         bool action = false;
          int i = 0;
          for (i = 0; i < actual; i++)
          {
@@ -128,8 +134,9 @@ static void app(void)
                   strncpy(buffer, client.name, BUF_SIZE - 1);
                   strncat(buffer, " disconnected !", BUF_SIZE - strlen(buffer) - 1);
                   send_message_to_all_clients(clients, client, actual, buffer, 1);
+                  action = true;
                }
-               if (strstr(buffer, "Private to ") - buffer == 0)
+               if ((strstr(buffer, "Private to ") - buffer == 0)&&(!action))
                {
                   char receiverNamebuff[BUF_SIZE];
                   strncpy(receiverNamebuff, &buffer[11], BUF_SIZE - 11);
@@ -139,45 +146,43 @@ static void app(void)
                   char *message = &receiverNamebuff[length];
                   for (int j = 0; j < actual; j++)
                   {
-                     if (strcmp(clients[j].name, receiverName) == 0)
+                     if ((strcmp(clients[j].name, receiverName) == 0)&&(!action))
                      {
                         send_message_to_a_client(clients, client, clients[j], actual, message, 0);
                      }
                   }
+                  action = 1;
                }
-               if(strstr(buffer, "Voir clients") - buffer == 0)
+               if((strstr(buffer, "Voir clients") - buffer == 0)&&(!action))
                {
                   for(int j = 0; j < actual; j++)
                   {
                      puts(clients[j].name);
                   }
+                  action = true;
                }
-               if(strstr(buffer, "Voir groupes") - buffer == 0)
+               if((strstr(buffer, "Voir groupes") - buffer == 0)&&(!action))
                {
                   for(int j = 0; j < actualGroupe; j++)
                   {
-                     puts(groupes[j].name);
-                     printf("%d", groupes[j].actualMembre);
+                     printf("%s (%d)",groupes[j].name, groupes[j].actualMembre);
                      for(int k = 0; k < groupes[j].actualMembre; k++)
                      {
-                        printf("membre n %d", k);
-                        printf("%s",groupes[j].membres[k].name);
+                        printf("\nMembre Num %d : %s", k, groupes[j].membres[k].name);
                      }
+                     printf("\n");
                   }
+                  action = true;
                }
-               if(strstr(buffer, "To ") - buffer == 0)
+               if((strstr(buffer, "To ") - buffer == 0)&&(!action))
                {
                   char groupNamebuff[BUF_SIZE] = "\0";
                   strncpy(groupNamebuff, &buffer[3], BUF_SIZE - 3);
-                  puts(buffer);
-                  puts(groupNamebuff);
                   char groupName[BUF_SIZE] = "\0";
                   strncpy(groupName, groupNamebuff, (strstr(groupNamebuff, " : ") - groupNamebuff));
-                  puts(groupName);
                   char message[BUF_SIZE] = "\0";
                   int debutMessage = 6 + strlen(groupName);
                   strncpy(message, &buffer[debutMessage], BUF_SIZE - debutMessage);
-                  puts(message);
                   for(int j = 0; j < actualGroupe; j++)
                   {
                      if(strcmp(groupes[j].name, groupName) == 0)
@@ -191,20 +196,17 @@ static void app(void)
                         }
                      }
                   }
+                  action = true;
                }
-               if(strstr(buffer, "Group ") - buffer == 0)
+               if((strstr(buffer, "Group ") - buffer == 0)&&(!action))
                {
                   char groupNamebuff[BUF_SIZE] = "\0";
                   strncpy(groupNamebuff, &buffer[6], BUF_SIZE - 6);
-                  puts(buffer);
-                  puts(groupNamebuff);
                   char groupName[BUF_SIZE] = "\0";
                   strncpy(groupName, groupNamebuff, (strstr(groupNamebuff, " : ") - groupNamebuff));
-                  puts(groupName);
                   char membreListe[BUF_SIZE] = "\0";
                   int debutListe = 9 + strlen(groupName);
                   strncpy(membreListe, &buffer[debutListe], BUF_SIZE - debutListe);
-                  puts(membreListe);
                   char *delim = ", ";
                   unsigned count = 0;
                   char *token = strtok(membreListe,delim);
@@ -217,29 +219,24 @@ static void app(void)
                      {
                         if(strcmp(clients[k].name, token) == 0)
                         {
-                           //memcpy(&membres[count], &clients[i], sizeof(Client));
                            membres[count] = clients[k];
-                           printf("Token no. %d : %s \n", count,membres[count].name);
                            count++;
                         }
                      }
                      token = strtok(NULL,delim);
                   }
                   create_groupe(membres, groupName, count);
+                  action = true;
                }
-               if(strstr(buffer, "Add to ") - buffer == 0)
+               if((strstr(buffer, "Add to ") - buffer == 0)&&(!action))
                {
                   char groupNamebuff[BUF_SIZE] = "\0";
                   strncpy(groupNamebuff, &buffer[7], BUF_SIZE - 7);
-                  puts(buffer);
-                  puts(groupNamebuff);
                   char groupName[BUF_SIZE] = "\0";
                   strncpy(groupName, groupNamebuff, (strstr(groupNamebuff, " : ") - groupNamebuff));
-                  puts(groupName);
                   char membreName[BUF_SIZE] = "\0";
                   int debutListe = 10 + strlen(groupName);
                   strncpy(membreName, &buffer[debutListe], BUF_SIZE - debutListe);
-                  puts(membreName);
                   for(int k = 0; k<actual;k++)
                   {
                      if(strcmp(clients[k].name, membreName) == 0)
@@ -247,20 +244,17 @@ static void app(void)
                         add_groupe_member(clients[k], groupName);
                      }
                   }
+                  action = true;
                }
-               if(strstr(buffer, "Remove from ") - buffer == 0)
+               if((strstr(buffer, "Remove from ") - buffer == 0)&&(!action))
                {
                   char groupNamebuff[BUF_SIZE] = "\0";
                   strncpy(groupNamebuff, &buffer[12], BUF_SIZE - 12);
-                  puts(buffer);
-                  puts(groupNamebuff);
                   char groupName[BUF_SIZE] = "\0";
                   strncpy(groupName, groupNamebuff, (strstr(groupNamebuff, " : ") - groupNamebuff));
-                  puts(groupName);
                   char membreName[BUF_SIZE] = "\0";
                   int debutListe = 15 + strlen(groupName);
                   strncpy(membreName, &buffer[debutListe], BUF_SIZE - debutListe);
-                  puts(membreName);
                   for(int k = 0; k<actual;k++)
                   {
                      if(strcmp(clients[k].name, membreName) == 0)
@@ -268,8 +262,9 @@ static void app(void)
                         delete_groupe_member(clients[k], groupName);
                      }
                   }
+                  action = true;
                }
-               else
+               if(!action)
                {
                   send_message_to_all_clients(clients, client, actual, buffer, 0);
                }
@@ -314,7 +309,6 @@ static void send_message_to_all_clients(Client *clients, Client sender, int actu
       }
    strncat(message, buffer, sizeof message - strlen(message) - 1);
    add_to_history(history,message);
-   puts(message);
    for (i = 0; i < actual; i++)
    {
       //puts(strncat(strncat(sender.name, " : ", sizeof sender.name - strlen(sender.name) - 1), buffer, sizeof sender.name - strlen(sender.name) + 3));
@@ -348,6 +342,7 @@ static void send_message_to_a_group(Client *clients, Client sender, int actual, 
          write_client(clients[i].sock, message);
       }
    }
+   puts(message);
 }
 
 static void send_message_to_a_client(Client *clients, Client sender, Client receiver, int actual, const char *buffer, char from_server)
@@ -368,12 +363,11 @@ static void send_message_to_a_client(Client *clients, Client sender, Client rece
             strncat(message, " : ", sizeof message - strlen(message) - 1);
          }
          strncat(message, buffer, sizeof message - strlen(message) - 1);
-         write_client(clients[i].sock, message);
-      
          strncat(serverMessage, "Pour ", BUF_SIZE-1);
          strncat(serverMessage, receiver.name, BUF_SIZE-1);
          strncat(serverMessage, " de ", BUF_SIZE-1);
          strncat(serverMessage, message, BUF_SIZE-1);
+         write_client(clients[i].sock, serverMessage);
       }
    }
    puts(serverMessage);
@@ -387,6 +381,21 @@ static void create_groupe(Client *clients, const char *buffer, int nbMembre)
    groupe.actualMembre = nbMembre;
    groupes[actualGroupe] = groupe;
    actualGroupe++;
+   char message_acceuil[BUF_SIZE];
+   message_acceuil[0]=0;
+   strcpy(message_acceuil, "Nouveau Groupe ");
+   strcat(message_acceuil, groupe.name);
+   strcat(message_acceuil, " composé de");
+   for(int i = 0; i<nbMembre; i++)
+   {
+      strcat(message_acceuil, " ");
+      strcat(message_acceuil, groupe.membres[i].name);
+   }
+   for(int i = 0; i<nbMembre; i++)
+   {
+      write_client(groupe.membres[i].sock, message_acceuil);
+   }
+   puts(message_acceuil);
 }
 static void add_groupe_member(Client client, const char *buffer)
 {
@@ -396,6 +405,23 @@ static void add_groupe_member(Client client, const char *buffer)
       {
          groupes[j].membres[groupes[j].actualMembre] = client;
          groupes[j].actualMembre ++;
+
+         char message_acceuil[BUF_SIZE];
+         message_acceuil[0]=0;
+         strcpy(message_acceuil, client.name);
+         strcat(message_acceuil, " a rejoint le groupe ");
+         strcat(message_acceuil, groupes[j].name);
+         strcat(message_acceuil, " composé de");
+         for(int i = 0; i<groupes[j].actualMembre; i++)
+         {
+            strcat(message_acceuil, " ");
+            strcat(message_acceuil, groupes[j].membres[i].name);
+         }
+         for(int i = 0; i<groupes[j].actualMembre; i++)
+         {
+            write_client(groupes[j].membres[i].sock, message_acceuil);
+         }
+         puts(message_acceuil);
       }
    }
 }
@@ -417,6 +443,23 @@ static void delete_groupe_member(Client client, const char *buffer)
          }
          memcpy(groupes[j].membres, newMembres, MAX_MEMBRES*sizeof(Client));
          groupes[j].actualMembre = newActualMembre;
+
+         char message_acceuil[BUF_SIZE];
+         message_acceuil[0]=0;
+         strcpy(message_acceuil, client.name);
+         strcat(message_acceuil, " a quitté le groupe ");
+         strcat(message_acceuil, groupes[j].name);
+         strcat(message_acceuil, " composé de");
+         for(int i = 0; i<groupes[j].actualMembre; i++)
+         {
+            strcat(message_acceuil, " ");
+            strcat(message_acceuil, groupes[j].membres[i].name);
+         }
+         for(int i = 0; i<groupes[j].actualMembre; i++)
+         {
+            write_client(groupes[j].membres[i].sock, message_acceuil);
+         }
+         puts(message_acceuil);
       }
    }
 }
