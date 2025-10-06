@@ -1,85 +1,77 @@
-Documentation de la Version "Historique Ephémère"
+# Reseau Socket C — Chat Server/Client
 
-**Les commandes à la disposition des clients**
+This project was a class project during 3rd year at INSA Lyon.
 
-1.  La déconnexion
+### Overview
 
-Lorsqu’un client s’est connecté sur le serveur, il a la possibilité de se 
-déconnecter à tout moment. Le client doit entrer la commande “quit” pour mettre fin à 
-sa connexion avec le serveur. Cette fonctionnalité est directement géré côté client.  
-Un serveur étant censé être connecté 24/7, nous avons décidé de ne pas 
-implémenter cette fonctionnalité pour le serveur.
+Simple multi-client chat using TCP sockets with ephemeral in-memory history on the server. Features include public broadcast, private messaging, group creation/membership, and a small usage guide automatically sent to new clients on connect.
 
-2. Le message privé
+Edit - Oct 2025 :  The project is now supported to compile and run on MacOS/Linux
 
-Pour envoyer un message privé à une personne X, un client Y peut écrire la commande "Private to X : [message]".
-Seul le client X recevra alors le message provenant de X. Ce message sera affiché dans le terminal du serveur mais ne sera pas
-sauvegardé dans l'historique.
+### Repository layout
 
-3. Créer un groupe
+- Client/: interactive terminal client
+- Serveur/: server and chat history logic
+- Makefile: cross-platform build (macOS/Linux/Windows MinGW)
 
-Pour créer un groupe avec un client X et Y, un client Z peut rentrer une commande de forme "Group [nom du groupe] : X, Y, Z".
-Le nombre de membre maximal dans un groupe est de 10 personnes. 
+### Build
 
-4. Envoyer un message dans un groupe
+Requirements: gcc/clang and make.
 
-Pour envoyer un message dans un groupe, un client peut écrire la commande "To [nom du groupe] : [message]".
-Seules les personnes du groupe recevront le message.
+- macOS/Linux:
+  - make
+  - Outputs: Serveur/serveur and Client/client
 
-5. Ajouter un membre dans un groupe
+- Windows (MinGW/MSYS):
+  - make (links ws2_32 automatically)
 
-Pour ajouter le client X à un groupe, un client quelconque peut écrire la commande "Add to [nom du groupe] : X".
-On ne peut ajouter qu'une personne à la fois dans un groupe.
+You can force platform detection if needed:
 
-6. Retirer un membre d'un groupe
+- make OSNAME=Darwin
+- make OSNAME=Linux
 
-Pour retirer le client X à un groupe, un client quelconque peut écrire la commande "Remove from [nom du groupe] : X".
-On ne peut retirer qu'une personne à la fois d'un groupe.
+### Run
 
-Les debuggers
+1) Start the server
 
-Afin de debugger le travail sur les groupes et les connexions, nous pouvons demander au serveur d'afficher la liste des 
-clients et des groupes. Dans n'importe quel terminal client connecté au serveur, on peut taper "Voir groupes" pour voir dans le terminal
-serveur les différents groupes et ses membres. La commande "Voir clients" permet de voir les clients connectés.
+- ./Serveur/serveur
+- Stop: press Enter in the server terminal (graceful) or Ctrl+C.
 
-**Les logs**
+2) Start one or more clients
 
-De manière générale, le terminal serveur affiche chaque action réalisé par les clients connectés :
-- Les connexions/déconnexions
-- Les messages à tout le monde
-- Les messages privés
-- Les messages groupés
-- Les créations de groupe
-- Les ajout/suppression de membre dans un groupe
+- ./Client/client <server_ip> <your_name>
+- Example: ./Client/client 127.0.0.1 Alice
 
-Cela permet de suivre le bon déroulé du code.
+On connect, the server sends you:
 
-**Historique de discussion**
+- recent history (ephemeral, server memory only)
+- a short usage guide with all commands
 
-Pour permettre à un client qui n’était pas connecté de récupérer le fil de la discussion 
-nous avons implémenté un historique. Les fonctions services et la structure 
-ont été codées dans un fichier C à part (history.c). L’historique est directement géré et 
-gardé en mémoire côté serveur.
-Les données enregistrées dans l’historique sont seulement issues des discussions 
-publiques et des actions de connexion/déconnexion. 
-L’historique s’affiche dés qu’un nouveau client se connecte au Socket. Un 
-aperçu des messages qui ont été échangé pendant son absence lui est directement envoyé.
-Notre historique est éphémère. Si le serveur se coupe, l'historique est perdu.
+**Client commands**
 
-**Axes d'améliorations de notre code**
+- Public message: type your message and press Enter
+- Private message: Private to <UserName> : <message>
+- List clients: See Clients
+- List groups: See Groups
+- Create group: Group <GroupName> : <User1>, <User2>
+- Send to group: To <GroupName> : <message>
+- Add to group: Add to <GroupName> : <UserName>
+- Remove from group: Remove from <GroupName> : <UserName>
+- Quit client: quit
 
-L’un des axes d’amélioration envisageable aurait été de produire un 
-historique personnel pour chaque client. Dans ce cas précis on aurait pu prendre en 
-compte les messages privés et les messages de groupe dans l’historique.  
-Stocker les différents historiques sous forme de fichier txt aurait permis d'avoir un POC
-viable à déployer.
-Des mesures de sécurités seraient aussi à ajouter. Aujourd'hui, chaque client peut ajouter ou retirer des membres dans 
-n'importe quel groupe. Chaque groupe est donc entièrement publique.
+**Notes**
 
-**Lancer le serveur et les clients**
+- History is ephemeral: restarting the server clears it.
+- Only public messages and connect/disconnect actions are saved to history.
+- Group membership is not restricted: any client can add/remove members.
 
-Pour compiler les fichiers serveurs (depuis le dossier Serveur) : gcc server2.c history.c -o serveur
-Pour le lancer : ./serveur
+**Implementation details**
 
-Pour compiler les fichiers clients (depuis le dossier Client) : gcc server.c -o client
-Pour le lancer : ./client [IP du serveur] [pseudo du client]
+- Server: TCP socket accept loop with select(), manages clients, groups, and history.
+- History: in-memory ring buffer in Serveur/history.c.
+- Cross-platform: Windows uses winsock (linked via -lws2_32); macOS/Linux use POSIX sockets. Headers are selected at compile time in Client/client2.h and Serveur/server2.h.
+
+**Troubleshooting**
+
+- Port in use: change PORT in Serveur/server2.h and Client/client2.h or stop the other process.
+- Build issues on Windows: ensure you run in MSYS/MinGW and have ws2_32 available.
