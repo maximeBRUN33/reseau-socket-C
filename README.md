@@ -34,13 +34,13 @@ You can force platform detection if needed:
 
 1) Start the server
 
-- ./Serveur/serveur
-- Stop: press Enter in the server terminal (graceful) or Ctrl+C.
+- ```./Serveur/serveur```
+- Stop: press ```Enter``` in the server terminal (graceful) or ```Ctrl+C```.
 
 2) Start one or more clients
 
-- ./Client/client <server_ip> <your_name>
-- Example: ./Client/client 127.0.0.1 Alice
+- ```./Client/client <server_ip> <your_name>```
+- Example: ```./Client/client 127.0.0.1 Alice```
 
 On connect, the server sends you:
 
@@ -50,14 +50,14 @@ On connect, the server sends you:
 **Client commands**
 
 - Public message: type your message and press Enter
-- Private message: Private to <UserName> : <message>
-- List clients: See Clients
-- List groups: See Groups
-- Create group: Group <GroupName> : <User1>, <User2>
-- Send to group: To <GroupName> : <message>
-- Add to group: Add to <GroupName> : <UserName>
-- Remove from group: Remove from <GroupName> : <UserName>
-- Quit client: quit
+- Private message: ```Private to <UserName> : <message>```
+- List clients: ```See Clients```
+- List groups: ```See Groups```
+- Create group: ```Group <GroupName> : <User1>, <User2>```
+- Send to group: ```To <GroupName> : <message>```
+- Add to group: ```Add to <GroupName> : <UserName>```
+- Remove from group: ```Remove from <GroupName> : <UserName>```
+- Quit client: ```quit```
 
 **Notes**
 
